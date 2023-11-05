@@ -1,6 +1,6 @@
 # alarm-clock
 
-## audioplayer INO
+## audioplayer.ino
 
 - Dependencies:
 	- AudioZero library
