@@ -6,25 +6,45 @@ static bool downloadComplete;
 char* songName;
 char* newSongName;
 
+// init FSM inputs (for global access)
+int snoozeButtonPresses;
+int stopButtonPresses;
+
+
+// pins
+const byte snoozeButton = 6; // TODO: change these
+const byte offButton = 7;
+const byte ledPin = 0; // TODO: add pins for LCD screen & other components
+
 void setup() {
   Serial.begin(9600);
   while (!Serial)
     ;
+  Serial.println("running setup...");
+
+  /* initialize data pins */
+  pinMode(snoozeButton, INPUT);
+  pinMode(offButton, INPUT);
+  pinMode(ledPin, OUTPUT);
+
+  /* initialize interrupts */
+  attachInterrupt(digitalPinToInterrupt(snoozeButton), snoozeISR, RISING);
+  attachInterrupt(digitalPinToInterrupt(offButton), alarmOffISR, RISING);
+
   initializeSystem();  // TODO: might need to modify from lab 5
   savedMillis = millis();
   minuteCounter = 0;
   lastReqMillis = 0;
   lastReqSecondsSince1900 = 0;
-  maxSnoozeTime = 600000;
+  maxSnoozeTime = 600000; // 10 min, in millis
   downloadComplete = false;
-  songName = "";  // TODO: are we starting with 1 pre downloaded?
+  songName = "";  // TODO: are we starting with 1 pre downloaded? 
   newSongName = "";
   nextAlarmTime = INT32_MAX - 1;
 }
 
 void loop() {
   static state CURRENT_STATE = sPROCESS_UPDATES;
-  updateInputs();  // TODO: implement
   CURRENT_STATE = updateFSM(CURRENT_STATE, millis(), snoozeButtonPresses, stopButtonPresses);
   delay(10);
 }
@@ -112,7 +132,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       break;
     default:
       nextState = sIDLE;
-      Serial.println("ERROR: Shouldn't reach default case");
+      // Serial.println("ERROR: Shouldn't reach default case");
       break;
       return nextState;
   }
