@@ -1,7 +1,7 @@
 /*
  * Here are functions that need to be filled in
- */
-void snoozeISR(int maxSnoozeTime) {
+ */ // TODO: should snoozeISR take in maxSnoozeTime if it's just incrementing button presses?
+void snoozeISR() {
   Serial.println("snooze ISR entered!");
   snoozeButtonPresses++;
 }
@@ -13,10 +13,6 @@ void alarmOffISR() {
 
 void playSong(char* songName) {
   Serial.println("running playSong()");
-}
-
-void ledParty() {
-  Serial.println("running ledParty()");
 }
 
 int requestSnoozeTime() {
@@ -34,6 +30,10 @@ int requestAlarmTime() {
 
 int requestCurrTime() {
   Serial.println("running requestCurrTime()");
+}
+
+int requestBPM() {
+
 }
 
 void stopSound() {
@@ -106,6 +106,9 @@ void displayTime(int currTimeInSeconds) {
   lcd.clear();
   lcd.setCursor(0,0);
   // TODO: calculate curr time and print
+  // NOTE: selena worked on this and is abandoning it with the hopes of sending via serial communication
+  int secsInADay = 86400;
+  int currTimeTodayInSecs = currTimeInSeconds % secsInADay; // time since 1900 % seconds in a day
 }
 
 void displaySnoozing(int snoozeTimeMS) {
@@ -115,3 +118,4 @@ void displaySnoozing(int snoozeTimeMS) {
   lcd.print(snoozeTimeMS / 60000); // TODO: think about if this will result in incorrect rounding
   lcd.print(" min");
 }
+

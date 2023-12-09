@@ -1,35 +1,43 @@
 #include "alarm.h"
+#include <FastLED.h>
 
 // FSM variables
 static int savedMillis, minuteCounter, lastReqMillis, lastReqSecondsSince1900, maxSnoozeTime, nextAlarmTime;
 static bool downloadComplete;
 char* songName;
 char* newSongName;
+int bpm;
 
-// init FSM inputs (for global access)
-int snoozeButtonPresses;
-int stopButtonPresses;
+// led related variables
+#define NUM_LEDS 300 // # of LEDs in your strip
+#define BRIGHTNESS  4 // 16 is a good value for this, was 64 in example code (max: 255)
+CRGB leds[NUM_LEDS];
 
 
 // pins
-const byte snoozeButton = 6; // TODO: change these
-const byte offButton = 7;
-const byte ledPin = 0; // TODO: add pins for LCD screen & other components
+pin_size_t snoozeButton = 6; // TODO: modify these on official circuit
+pin_size_t offButton = 7;
+const int ledPin = 0; // TODO: add pins for LCD screen & other components
 
 void setup() {
   Serial.begin(9600);
   while (!Serial)
     ;
   Serial.println("running setup...");
+  Serial.println("in alarm.ino");
 
   /* initialize data pins */
   pinMode(snoozeButton, INPUT);
   pinMode(offButton, INPUT);
-  pinMode(ledPin, OUTPUT);
 
   /* initialize interrupts */
-  attachInterrupt(digitalPinToInterrupt(snoozeButton), snoozeISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(offButton), alarmOffISR, RISING);
+  attachInterrupt(snoozeButton, snoozeISR, RISING);
+  attachInterrupt(offButton, alarmOffISR, RISING);
+
+  /* initialize LEDs */
+  FastLED.addLeds<WS2812B, ledPin, RGB>(leds, NUM_LEDS);  // GRB ordering is typical  
+  setupLEDs(BRIGHTNESS);
+  ledParty(leds, NUM_LEDS, CRGB::Brown, 60); // testing that it gets this far
 
   initializeSystem();  // TODO: might need to modify from lab 5
   savedMillis = millis();
@@ -41,6 +49,7 @@ void setup() {
   songName = "";  // TODO: are we starting with 1 pre downloaded? 
   newSongName = "";
   nextAlarmTime = INT32_MAX - 1;
+  bpm = 60;
 }
 
 void loop() {
@@ -79,7 +88,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
         displayAlarming();
         playSong(songName); // TODO: write play song
-        ledParty(); // TODO: write led party
+        // ledParty(); // TODO: modify to include proper params
         resetButtons();
         nextState = sALARMING;
       } else if (minuteCounter >= 5 && lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
@@ -120,7 +129,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (mils - savedMillis >= maxSnoozeTime) {
         displayAlarming();
         playSong(songName);
-        ledParty();
+        // ledParty(); // TODO: fill in w proper args
         resetButtons();
         nextState = sALARMING;
       } else if (mils - savedMillis > 60000 && mils - savedMillis < maxSnoozeTime) {
