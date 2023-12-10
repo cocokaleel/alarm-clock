@@ -1,5 +1,4 @@
 #include "alarm.h"
-#include <FastLED.h>
 
 // FSM variables
 static int savedMillis, minuteCounter, lastReqMillis, lastReqSecondsSince1900, maxSnoozeTime, nextAlarmTime;
@@ -10,8 +9,10 @@ int bpm;
 
 // led related variables
 #define NUM_LEDS 300 // # of LEDs in your strip
-#define BRIGHTNESS  4 // 16 is a good value for this, was 64 in example code (max: 255)
+#define BRIGHTNESS 2 // 16 is a good value for this, was 64 in example code (max: 255)
 CRGB leds[NUM_LEDS];
+CRGB color1 = CRGB::Green;
+CRGB color2 = CRGB::Black;
 
 
 // pins
@@ -37,7 +38,6 @@ void setup() {
   /* initialize LEDs */
   FastLED.addLeds<WS2812B, ledPin, RGB>(leds, NUM_LEDS);  // GRB ordering is typical  
   setupLEDs(BRIGHTNESS);
-  ledParty(leds, NUM_LEDS, CRGB::Brown, 60); // testing that it gets this far
 
   initializeSystem();  // TODO: might need to modify from lab 5
   savedMillis = millis();
@@ -49,7 +49,7 @@ void setup() {
   songName = "";  // TODO: are we starting with 1 pre downloaded? 
   newSongName = "";
   nextAlarmTime = INT32_MAX - 1;
-  bpm = 60;
+  bpm = 30;
 }
 
 void loop() {
@@ -88,7 +88,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
         displayAlarming();
         playSong(songName); // TODO: write play song
-        // ledParty(); // TODO: modify to include proper params
+        ledParty(leds, NUM_LEDS, color1, color2, bpm);
         resetButtons();
         nextState = sALARMING;
       } else if (minuteCounter >= 5 && lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
@@ -129,7 +129,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (mils - savedMillis >= maxSnoozeTime) {
         displayAlarming();
         playSong(songName);
-        // ledParty(); // TODO: fill in w proper args
+        ledParty(leds, NUM_LEDS, color1, color2, bpm); 
         resetButtons();
         nextState = sALARMING;
       } else if (mils - savedMillis > 60000 && mils - savedMillis < maxSnoozeTime) {
