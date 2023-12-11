@@ -49,8 +49,8 @@ void setup() {
   pinMode(offButton, INPUT);
 
   /* initialize interrupts */
-  attachInterrupt(snoozeButton, snoozeISR, RISING);
-  attachInterrupt(offButton, alarmOffISR, RISING);
+  //attachInterrupt(snoozeButton, snoozeISR, RISING);
+  //attachInterrupt(offButton, alarmOffISR, RISING);
 
   /* initialize LEDs */
   FastLED.addLeds<WS2812B, ledPin, RGB>(leds, NUM_LEDS);  // GRB ordering is typical  
@@ -64,7 +64,7 @@ void setup() {
   songName = "";
   bpm = 30;
   lastReqMillis = millis();
-  while(!request_update()) {
+  while(!requestUpdate()) {
     delay(500);
   };
   maxSnoozeTime = getResp.snooze_in_ms;
@@ -80,7 +80,6 @@ void loop() {
   Serial.println("STATE");
   Serial.println(CURRENT_STATE);
   CURRENT_STATE = updateFSM(CURRENT_STATE, millis(), snoozeButtonPresses, stopButtonPresses);
-  
   delay(10);
 }
 
@@ -91,6 +90,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (newSongName != songName) {
         displayDownloadMessage();
         downloadComplete = false;
+        downloadSong(newSongName);
         nextState = sDOWNLOAD_SONG;
       } else {
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
@@ -113,13 +113,13 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
     case sIDLE:
       if (lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
         displayAlarming();
-        playSong(songName); // TODO: write play song
+        playSong(songName);
         ledParty(leds, NUM_LEDS, color1, color2, bpm);
         resetButtons();
         nextState = sALARMING;
       } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
         displayConnecting();
-        while(!request_update());
+        while(!requestUpdate());
         maxSnoozeTime = getResp.snooze_in_ms;
         nextAlarmTime = getResp.alarm;
         newSongName = getResp.song_name;

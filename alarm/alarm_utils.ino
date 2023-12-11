@@ -1,6 +1,3 @@
-/*
- * Here are functions that need to be filled in
- */ // TODO: should snoozeISR take in maxSnoozeTime if it's just incrementing button presses?
 void snoozeISR() {
   Serial.println("snooze ISR entered!");
   snoozeButtonPresses++;
@@ -25,25 +22,8 @@ void playSong(String songName) {
   AudioZero.play(myFile);
 }
 
-int requestSnoozeTime() {
-  Serial.println("running requestSnoozeTime()");
-}
-
-// TODO: should this return a char array or a pointer to a char (char*)?
-char* requestSongName() {
-  Serial.println("running requestSongName()");
-}
-
-int requestAlarmTime() {
-  Serial.println("running requestAlarmTime()");
-}
-
-int requestCurrTime() {
-  Serial.println("running requestCurrTime()");
-}
-
 int requestBPM() {
-
+//TODO
 }
 
 void stopSound() {
@@ -53,11 +33,6 @@ void stopSound() {
 void stopLEDs() {
   Serial.println("running stopLEDs()");
 }
-
-void updateInputs() {
-  // Serial.println("running updateInputs()");
-}
-
 
 /*
  * FUNCTIONS THAT ARE FILLED IN BELOW THIS POINT
@@ -148,7 +123,7 @@ void setupWiFi() {
   Serial.println("Connected!");
 }
 
-bool request_update() {
+bool requestUpdate() {
   String json = "";
   int err = 0;
   err = http.get("/all-settings");
@@ -179,15 +154,7 @@ bool request_update() {
           }
       }
       Serial.println(json);
-      int first_break = json.indexOf(',');
-      int second_break = json.indexOf(',', first_break + 1);
-      int third_break = json.indexOf(',', second_break + 1);
-      response res;
-      res.alarm = json.substring(json.indexOf(':') + 1, first_break).toInt();
-      res.snooze_in_ms = json.substring(json.indexOf(':', first_break + 1) + 1, second_break).toInt() * 60000;
-      res.song_name = json.substring(json.indexOf(':', second_break + 1) + 2, third_break - 1);
-      res.curr_time = json.substring(json.indexOf(':', third_break + 1) + 1, json.length() - 1).toInt();
-      getResp = res;
+      getResp = parseJSON(json);
       http.stop();
       maxSnoozeTime = getResp.snooze_in_ms;
       newSongName = getResp.song_name;
@@ -212,3 +179,90 @@ bool request_update() {
   return false;
 }
 
+response parseJSON(String json) {
+  int first_break = json.indexOf(',');
+  int second_break = json.indexOf(',', first_break + 1);
+  int third_break = json.indexOf(',', second_break + 1);
+  response res;
+  res.alarm = json.substring(json.indexOf(':') + 1, first_break).toInt();
+  res.snooze_in_ms = json.substring(json.indexOf(':', first_break + 1) + 1, second_break).toInt() * 60000;
+  res.song_name = json.substring(json.indexOf(':', second_break + 1) + 2, third_break - 1);
+  res.curr_time = json.substring(json.indexOf(':', third_break + 1) + 1, json.length() - 1).toInt();
+  return res;
+}
+
+String pullWeather() {
+  String json = "";
+  int err = 0;
+  err = http.get("/weather");
+  if (err == 0) {
+    err = http.responseStatusCode();
+    if (err >= 0) {
+      Serial.print("Got status code: ");
+      Serial.println(err);
+      unsigned long timeoutStart = millis();
+      char c;
+      while ( (http.connected() || http.available()) &&
+             (!http.endOfBodyReached()) &&
+             ((millis() - timeoutStart) < 30000)) {
+          if (http.available()) {
+              c = http.read();
+              json += c;
+              timeoutStart = millis();
+          }
+          else {
+              delay(500);
+          }
+      }
+      Serial.println(json);
+      http.stop();
+      return json;
+    }
+    else {    
+      Serial.print("Getting response failed: ");
+      Serial.println(err);
+    }
+  }
+  else {
+    Serial.print("Connect failed: ");
+    Serial.println(err);
+  }
+  http.stop();
+  return "";
+}
+
+void downloadSong(newSongName) {
+  int err = 0;
+  err = http.get("/download-wav");
+  if (err == 0) {
+    err = http.responseStatusCode();
+    if (err >= 0) {
+      Serial.print("Got status code: ");
+      Serial.println(err);
+      unsigned long timeoutStart = millis();
+      char c;
+      while ( (http.connected() || http.available()) &&
+             (!http.endOfBodyReached()) &&
+             ((millis() - timeoutStart) < 30000) ) {
+          if (http.available()) {
+              c = http.read();
+              
+              timeoutStart = millis();
+          }
+          else {
+              delay(500);
+          }
+      }
+    }
+    else {    
+      Serial.print("Getting response failed: ");
+      Serial.println(err);
+    }
+  }
+  else {
+    Serial.print("Connect failed: ");
+    Serial.println(err);
+  }
+  http.stop();
+  downloadComplete = true;
+}
