@@ -269,7 +269,9 @@ void saveWeather() {
 }
 
 void downloadSong(String newSongName) {
+  String testing = "";
   int err = 0;
+  int readBytes = 0;
   err = http.get("/download-wav");
   if (err == 0) {
     err = http.responseStatusCode();
@@ -278,10 +280,13 @@ void downloadSong(String newSongName) {
       Serial.println(err);
       unsigned long timeoutStart = millis();
       char c;
-      while ((http.connected() || http.available()) && (!http.endOfBodyReached()) && ((millis() - timeoutStart) < 30000)) {
+      File songFile = SD.open(newSongName, FILE_WRITE);
+      while ((http.connected() || http.available()) && ((millis() - timeoutStart) < 30000)) {
         if (http.available()) {
           c = http.read();
-
+          songFile.write(c);
+          readBytes += 1;   
+          testing += c;
           timeoutStart = millis();
         } else {
           delay(500);
@@ -296,5 +301,9 @@ void downloadSong(String newSongName) {
     Serial.println(err);
   }
   http.stop();
+  Serial.println("SONG DATA: ");
+  Serial.println(testing);
+  Serial.println("BYTES READ: ");
+  Serial.println(readBytes);
   downloadComplete = true;
 }
