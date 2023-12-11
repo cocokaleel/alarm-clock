@@ -4,15 +4,25 @@
 void snoozeISR() {
   Serial.println("snooze ISR entered!");
   snoozeButtonPresses++;
+  AudioZero.end();
 }
 
 void alarmOffISR() {
   Serial.println("alarm off ISR entered!");
   stopButtonPresses++;
+  AudioZero.end();
 }
 
 void playSong(String songName) {
   Serial.println("running playSong()");
+  File myFile = SD.open("HOTTOG~1.wav");
+  if (!myFile) {
+    // if the file didn't open, print an error and stop
+    Serial.println("error opening HOTTOG~1.wav");
+    while (true);
+  }
+  AudioZero.begin(2*44100);
+  AudioZero.play(myFile);
 }
 
 int requestSnoozeTime() {

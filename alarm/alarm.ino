@@ -1,6 +1,11 @@
 #include "alarm.h"
 #include <WiFi101.h>
 #include <ArduinoHttpClient.h>
+#include <SD.h>
+#include <SPI.h>
+#include <AudioZero.h>
+
+const int chipSelect = 7;
 
 // FSM variables
 static int savedMillis, minuteCounter, lastReqMillis, lastReqSecondsSince1970, maxSnoozeTime, nextAlarmTime;
@@ -31,6 +36,13 @@ const int ledPin = 0; // TODO: add pins for LCD screen & other components
 void setup() {
   Serial.begin(9600);
   while (!Serial);
+
+  Serial.print("Initializing SD card...");
+  if (!SD.begin(chipSelect)) {
+    Serial.println(" failed!");
+    while(true);
+  }
+  Serial.println(" done.");
 
   /* initialize data pins */
   pinMode(snoozeButton, INPUT);
