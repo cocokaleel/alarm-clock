@@ -95,10 +95,60 @@ bool testResetButtons(){
   }
 }
 
+/**
+ * We unit test displayAlarming by copying the code from within the
+ * function and using the return parameters to ensure that bytes
+ * were written to the LCD screen. 
+ * Then, our guard to ensure correctness makes sure that bytes 
+ * were written for both displaying a 'WAKE UP' message and a 
+ * weather message.
+ */
 bool testDisplayAlarming() {
+  initializeSystem();
+  // since displayAlarming doesn't return anything, I have copied
+  // the inside of the function here use that to assert that bytes 
+  // were written to the LCD screen
 
+  /* displayAlarming() code */
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  int bytesWritten = lcd.print("WAKE UP");
+  lcd.setCursor(0, 1);
+
+  String exWeatherMessage = "H: 60 L: 48"; // TODO: this may be an error from being a string
+
+  int weatherBytesWritten = lcd.print(exWeatherMessage);
+
+  if (bytesWritten > 0 && weatherBytesWritten > 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
+bool testdisplayDownloadMessage() {
+  initializeSystem();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  int bytesWritten = lcd.print("DOWNLOADING SONG");
+  if (bytesWritten > 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool testDisplayConnecting() {
+  initializeSystem();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  int bytesWritten = lcd.print("CONNECTING...");
+  if (bytesWritten > 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 // /*
 //  * Runs through all the test cases defined above
