@@ -1,11 +1,21 @@
 #include "alarm.h"
+#include <SPI.h>
+#include <WiFi101.h>
+#include <ArduinoHttpClient.h>
 
 // FSM variables
-static int savedMillis, minuteCounter, lastReqMillis, lastReqSecondsSince1900, maxSnoozeTime, nextAlarmTime;
+static int savedMillis, minuteCounter, lastReqMillis, lastReqSecondsSince1970, maxSnoozeTime, nextAlarmTime;
 static bool downloadComplete;
-char* songName;
-char* newSongName;
+String songName;
+String newSongName;
+response getResp;
 int bpm;
+
+const char serverAddress[] = "alarm-interface-d79607b746d4.herokuapp.com";
+const int serverPort = 443;
+
+WiFiSSLClient client;
+HttpClient http(client, serverAddress, serverPort);
 
 // led related variables
 #define NUM_LEDS 300 // # of LEDs in your strip
@@ -14,7 +24,6 @@ CRGB leds[NUM_LEDS];
 CRGB color1 = CRGB::Green;
 CRGB color2 = CRGB::Black;
 
-
 // pins
 pin_size_t snoozeButton = 6; // TODO: modify these on official circuit
 pin_size_t offButton = 7;
@@ -22,10 +31,7 @@ const int ledPin = 0; // TODO: add pins for LCD screen & other components
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial)
-    ;
-  Serial.println("running setup...");
-  Serial.println("in alarm.ino");
+  while (!Serial);
 
   /* initialize data pins */
   pinMode(snoozeButton, INPUT);
@@ -38,18 +44,20 @@ void setup() {
   /* initialize LEDs */
   FastLED.addLeds<WS2812B, ledPin, RGB>(leds, NUM_LEDS);  // GRB ordering is typical  
   setupLEDs(BRIGHTNESS);
+  setupWiFi();
 
-  initializeSystem();  // TODO: might need to modify from lab 5
+  initializeSystem();
   savedMillis = millis();
   minuteCounter = 0;
-  lastReqMillis = 0;
-  lastReqSecondsSince1900 = 0;
-  maxSnoozeTime = 600000; // 10 min, in millis
   downloadComplete = false;
-  songName = "";  // TODO: are we starting with 1 pre downloaded? 
-  newSongName = "";
-  nextAlarmTime = INT32_MAX - 1;
+  songName = "";
   bpm = 30;
+  make_request();
+  maxSnoozeTime = getResp.snooze_in_ms;
+  nextAlarmTime = getResp.alarm;
+  newSongName = getResp.song_name;
+  lastReqMillis = 0;
+  lastReqSecondsSince1970 = 0;
 }
 
 void loop() {
@@ -67,7 +75,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
         downloadComplete = false;
         nextState = sDOWNLOAD_SONG;
       } else {
-        displayTime(lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000);  // TODO: write this display function
+        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);  // TODO: write this display function
         savedMillis = mils;
         minuteCounter = 0;
         nextState = sIDLE;
@@ -75,7 +83,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       break;
     case sDOWNLOAD_SONG:
       if (downloadComplete) {
-        displayTime(lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000);
+        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         songName = newSongName;
         minuteCounter = 0;
         nextState = sIDLE;
@@ -85,21 +93,22 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       }
       break;
     case sIDLE:
-      if (lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
+      if (lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
         displayAlarming();
         playSong(songName); // TODO: write play song
         ledParty(leds, NUM_LEDS, color1, color2, bpm);
         resetButtons();
         nextState = sALARMING;
-      } else if (minuteCounter >= 5 && lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
+      } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
         displayConnecting();
-        maxSnoozeTime = requestSnoozeTime(); //TODO: write request function
-        newSongName = requestSongName(); //TODO: write request function
-        nextAlarmTime = requestAlarmTime(); //TODO: write request function (or could/should there just be 1 request function that pulls all data?) (val should be in sec since 1900)
-        lastReqSecondsSince1900 = requestCurrTime(); //TODO: write request function
+        make_request();
+        maxSnoozeTime = getResp.snooze_in_ms;
+        nextAlarmTime = getResp.alarm;
+        newSongName = getResp.song_name;
+        lastReqSecondsSince1970 = requestCurrTime(); //TODO: write request function
         nextState = sPROCESS_UPDATES;
-      } else if (minuteCounter < 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000 < nextAlarmTime) {
-        displayTime(lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000);
+      } else if (minuteCounter < 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 < nextAlarmTime) {
+        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         minuteCounter += 1;
         savedMillis = mils;
         nextState = sIDLE;
@@ -109,7 +118,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       break;
     case sALARMING:
       if (stopPresses > 0) {
-        displayTime(lastReqSecondsSince1900 + (mils - lastReqMillis) / 1000);
+        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         stopSound(); // TODO: write stop sound
         stopLEDs(); // TODO: write stop leds
         savedMillis = mils;
@@ -141,7 +150,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       break;
     default:
       nextState = sIDLE;
-      // Serial.println("ERROR: Shouldn't reach default case");
+      Serial.println("ERROR: Shouldn't reach default case");
       break;
       return nextState;
   }
