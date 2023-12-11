@@ -114,8 +114,8 @@ void displayTime(int currTimeInSeconds) {
   int currTimeTodayInHours = currTimeTodayInMinutes / 60;
   boolean isMorning = currTimeTodayInHours > 12;
   currTimeTodayInHours -= (isMorning ? 0 : 12);
-  
-  lcd.print(""+currTimeTodayInHours+":"+minuteHand+" "+(isMorning ? "AM" : "PM"));
+  String time_string = String(currTimeTodayInHours)+":"+minuteHand+" "+(isMorning ? "AM" : "PM");
+  lcd.print(time_string);
 }
 
 void displaySnoozing(int snoozeTimeMS) {
