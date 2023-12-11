@@ -52,12 +52,12 @@ void setup() {
   downloadComplete = false;
   songName = "";
   bpm = 30;
+  lastReqMillis = millis();
   make_request();
   maxSnoozeTime = getResp.snooze_in_ms;
   nextAlarmTime = getResp.alarm;
   newSongName = getResp.song_name;
-  lastReqMillis = 0;
-  lastReqSecondsSince1970 = 0;
+  lastReqSecondsSince1970 = getResp.curr_time;
 }
 
 void loop() {

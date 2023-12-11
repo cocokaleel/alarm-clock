@@ -14,6 +14,7 @@ typedef struct {
   int alarm;
   int snooze_in_ms;
   String song_name;
+  int curr_time;
 } response;
 
 /*

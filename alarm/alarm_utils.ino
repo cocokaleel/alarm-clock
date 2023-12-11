@@ -144,9 +144,11 @@ void make_request() {
     maxSnoozeTime = getResp.snooze_in_ms;
     newSongName = getResp.song_name;
     nextAlarmTime = getResp.alarm;
+    lastReqSecondsSince1970 = getResp.curr_time;
     Serial.println(maxSnoozeTime);
     Serial.println(newSongName);
     Serial.println(nextAlarmTime);
+    Serial.println(curr_time);
   } else {
     Serial.println("Request failed, trying again in 10 sec");
   }
@@ -185,10 +187,12 @@ bool request_update() {
       Serial.println(json);
       int first_break = json.indexOf(',');
       int second_break = json.indexOf(',', first_break + 1);
+      int third_break = json.indexOf(',', second_break + 1);
       response res;
-      res.alarm = json.substring(json.indexOf(':') + 1, first_break).toInt(); // ASSUMES ALARM IS NUMERICAL NOT STRING
+      res.alarm = json.substring(json.indexOf(':') + 1, first_break).toInt();
       res.snooze_in_ms = json.substring(json.indexOf(':', first_break + 1) + 1, second_break).toInt() * 60000;
-      res.song_name = json.substring(json.indexOf(':', second_break + 1) + 2, json.length() - 2);
+      res.song_name = json.substring(json.indexOf(':', second_break + 1) + 2, third_break - 1);
+      res.curr_time = json.substring(json.indexOf(':', third + 1) + 1, json.length() - 1).toInt();
       getResp = res;
       http.stop();
       return true;
