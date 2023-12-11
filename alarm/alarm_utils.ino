@@ -105,8 +105,6 @@ void displayConnecting() {
 void displayTime(int currTimeInSeconds) {
   lcd.clear();
   lcd.setCursor(0,0);
-  // TODO: calculate curr time and print
-  // NOTE: selena worked on this and is abandoning it with the hopes of sending via serial communication
   int secsInADay = 86400;
   int currTimeTodayInSecs = currTimeInSeconds % secsInADay; // time since 1900 % seconds in a day
   int currTimeTodayInMinutes = currTimeTodayInSecs / 60;
@@ -116,6 +114,7 @@ void displayTime(int currTimeInSeconds) {
   currTimeTodayInHours -= (isMorning ? 0 : 12);
   String time_string = String(currTimeTodayInHours)+":"+minuteHand+" "+(isMorning ? "AM" : "PM");
   lcd.print(time_string);
+  Serial.println("displaying time!");
 }
 
 void displaySnoozing(int snoozeTimeMS) {
@@ -137,21 +136,6 @@ void setupWiFi() {
     delay(2000);
   }
   Serial.println("Connected!");
-}
-
-void make_request() {
-  if (request_update()) {
-    maxSnoozeTime = getResp.snooze_in_ms;
-    newSongName = getResp.song_name;
-    nextAlarmTime = getResp.alarm;
-    lastReqSecondsSince1970 = getResp.curr_time;
-    Serial.println(maxSnoozeTime);
-    Serial.println(newSongName);
-    Serial.println(nextAlarmTime);
-    Serial.println(lastReqSecondsSince1970);
-  } else {
-    Serial.println("Request failed, trying again in 10 sec");
-  }
 }
 
 bool request_update() {
@@ -195,6 +179,14 @@ bool request_update() {
       res.curr_time = json.substring(json.indexOf(':', third_break + 1) + 1, json.length() - 1).toInt();
       getResp = res;
       http.stop();
+      maxSnoozeTime = getResp.snooze_in_ms;
+      newSongName = getResp.song_name;
+      nextAlarmTime = getResp.alarm;
+      lastReqSecondsSince1970 = getResp.curr_time;
+      Serial.println(maxSnoozeTime);
+      Serial.println(newSongName);
+      Serial.println(nextAlarmTime);
+      Serial.println(lastReqSecondsSince1970);
       return true;
     }
     else {    
