@@ -1,5 +1,4 @@
 #include "alarm.h"
-#include <SPI.h>
 #include <WiFi101.h>
 #include <ArduinoHttpClient.h>
 
@@ -53,29 +52,36 @@ void setup() {
   songName = "";
   bpm = 30;
   lastReqMillis = millis();
-  make_request();
+  while(!request_update()) {
+    delay(500);
+  };
   maxSnoozeTime = getResp.snooze_in_ms;
   nextAlarmTime = getResp.alarm;
   newSongName = getResp.song_name;
   lastReqSecondsSince1970 = getResp.curr_time;
+  Serial.println("made it");
+  Serial.println(maxSnoozeTime);
 }
 
 void loop() {
   static state CURRENT_STATE = sPROCESS_UPDATES;
+  Serial.println("STATE");
+  Serial.println(CURRENT_STATE);
   CURRENT_STATE = updateFSM(CURRENT_STATE, millis(), snoozeButtonPresses, stopButtonPresses);
+  
   delay(10);
 }
 
 state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
   state nextState;
   switch (curState) {
-    case sPROCESS_UPDATES:  // TODO: will newSongName be updated fast enough? alternatively, should we have a boolean get set by one of the request functions, and use that as a guard (i.e. don't leave process updates state until bool is flipped?)
+    case sPROCESS_UPDATES:
       if (newSongName != songName) {
         displayDownloadMessage();
         downloadComplete = false;
         nextState = sDOWNLOAD_SONG;
       } else {
-        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);  // TODO: write this display function
+        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         savedMillis = mils;
         minuteCounter = 0;
         nextState = sIDLE;
@@ -101,11 +107,11 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
         nextState = sALARMING;
       } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
         displayConnecting();
-        make_request();
+        while(!request_update());
         maxSnoozeTime = getResp.snooze_in_ms;
         nextAlarmTime = getResp.alarm;
         newSongName = getResp.song_name;
-        lastReqSecondsSince1970 = requestCurrTime(); //TODO: write request function
+        lastReqSecondsSince1970 = getResp.curr_time;
         nextState = sPROCESS_UPDATES;
       } else if (minuteCounter < 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 < nextAlarmTime) {
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
@@ -152,6 +158,6 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       nextState = sIDLE;
       Serial.println("ERROR: Shouldn't reach default case");
       break;
-      return nextState;
   }
+  return nextState;
 }

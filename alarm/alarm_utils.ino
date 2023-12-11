@@ -114,6 +114,7 @@ void displayTime(int currTimeInSeconds) {
   currTimeTodayInHours -= (isAfternoon ? 12 : 0);
   String time_string = String(currTimeTodayInHours)+":"+minuteHand+" "+(isAfternoon ? "PM" : "AM");
   lcd.print(time_string);
+  Serial.println("displaying time!");
 }
 
 void displaySnoozing(int snoozeTimeMS) {
@@ -135,21 +136,6 @@ void setupWiFi() {
     delay(2000);
   }
   Serial.println("Connected!");
-}
-
-void make_request() {
-  if (request_update()) {
-    maxSnoozeTime = getResp.snooze_in_ms;
-    newSongName = getResp.song_name;
-    nextAlarmTime = getResp.alarm;
-    lastReqSecondsSince1970 = getResp.curr_time;
-    Serial.println(maxSnoozeTime);
-    Serial.println(newSongName);
-    Serial.println(nextAlarmTime);
-    Serial.println(lastReqSecondsSince1970);
-  } else {
-    Serial.println("Request failed, trying again in 10 sec");
-  }
 }
 
 bool request_update() {
@@ -193,6 +179,14 @@ bool request_update() {
       res.curr_time = json.substring(json.indexOf(':', third_break + 1) + 1, json.length() - 1).toInt();
       getResp = res;
       http.stop();
+      maxSnoozeTime = getResp.snooze_in_ms;
+      newSongName = getResp.song_name;
+      nextAlarmTime = getResp.alarm;
+      lastReqSecondsSince1970 = getResp.curr_time;
+      Serial.println(maxSnoozeTime);
+      Serial.println(newSongName);
+      Serial.println(nextAlarmTime);
+      Serial.println(lastReqSecondsSince1970);
       return true;
     }
     else {    
