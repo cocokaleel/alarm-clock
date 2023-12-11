@@ -4,6 +4,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <AudioZero.h>
+#include <avr/wdt.h> // to pet watchdog at every FSM transition
 
 const int chipSelect = 7;
 
@@ -73,6 +74,9 @@ void setup() {
   nextAlarmTime = getResp.alarm;
   newSongName = getResp.song_name;
   lastReqSecondsSince1970 = getResp.curr_time;
+
+  /* initialize watchdog timer */ 
+  wdt_enable( WDTO_60S); // tripps when 60 seconds pass and watchdog timer isn't being petted and resetted, jumps back to start of setup() code when tripped
 }
 
 void loop() {
@@ -80,6 +84,7 @@ void loop() {
   Serial.println("STATE");
   Serial.println(CURRENT_STATE);
   CURRENT_STATE = updateFSM(CURRENT_STATE, millis(), snoozeButtonPresses, stopButtonPresses);
+  wdt_reset(); // pet and resets the watchdog
   delay(10);
 }
 
