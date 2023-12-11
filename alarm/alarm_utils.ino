@@ -105,16 +105,14 @@ void displayConnecting() {
 void displayTime(int currTimeInSeconds) {
   lcd.clear();
   lcd.setCursor(0,0);
-  // TODO: calculate curr time and print
-  // NOTE: selena worked on this and is abandoning it with the hopes of sending via serial communication
   int secsInADay = 86400;
   int currTimeTodayInSecs = currTimeInSeconds % secsInADay; // time since 1900 % seconds in a day
   int currTimeTodayInMinutes = currTimeTodayInSecs / 60;
   int minuteHand = currTimeTodayInMinutes % 60;
   int currTimeTodayInHours = currTimeTodayInMinutes / 60;
-  boolean isMorning = currTimeTodayInHours > 12;
-  currTimeTodayInHours -= (isMorning ? 0 : 12);
-  String time_string = String(currTimeTodayInHours)+":"+minuteHand+" "+(isMorning ? "AM" : "PM");
+  boolean isAfternoon = currTimeTodayInHours > 12;
+  currTimeTodayInHours -= (isAfternoon ? 12 : 0);
+  String time_string = String(currTimeTodayInHours)+":"+minuteHand+" "+(isAfternoon ? "PM" : "AM");
   lcd.print(time_string);
 }
 
