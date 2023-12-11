@@ -10,6 +10,12 @@ typedef enum {
   sSNOOZING = 5,
 } state;
 
+typedef struct {
+  int alarm;
+  int snooze_in_ms;
+  String song_name;
+} response;
+
 /*
  * Input variables
  */
