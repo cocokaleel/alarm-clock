@@ -14,7 +14,6 @@ String songName;
 String newSongName;
 String weatherMessage;
 response getResp;
-int bpm;
 
 const char serverAddress[] = "alarm-interface-d79607b746d4.herokuapp.com";
 const int serverPort = 443;
@@ -22,17 +21,9 @@ const int serverPort = 443;
 WiFiSSLClient client;
 HttpClient http(client, serverAddress, serverPort);
 
-// led related variables
-#define NUM_LEDS 300 // # of LEDs in your strip
-#define BRIGHTNESS 2 // 16 is a good value for this, was 64 in example code (max: 255)
-CRGB leds[NUM_LEDS];
-CRGB color1 = CRGB::Green;
-CRGB color2 = CRGB::Black;
-
 // pins
 pin_size_t snoozeButton = A1; // TODO: modify these on official circuit
 pin_size_t offButton = A2;
-const int ledPin = 0; // TODO: add pins for LCD screen & other components
 
 void setup() {
   Serial.begin(9600);
@@ -52,10 +43,6 @@ void setup() {
   /* initialize interrupts */
   //attachInterrupt(snoozeButton, snoozeISR, RISING);
   //attachInterrupt(offButton, alarmOffISR, RISING);
-
-  /* initialize LEDs */
-  FastLED.addLeds<WS2812B, ledPin, RGB>(leds, NUM_LEDS);  // GRB ordering is typical  
-  setupLEDs(BRIGHTNESS);
   setupWiFi();
 
   initializeSystem();
@@ -63,7 +50,6 @@ void setup() {
   minuteCounter = 0;
   downloadComplete = false;
   songName = "";
-  bpm = 30;
   lastReqMillis = millis();
   while(!requestUpdate()) {
     delay(500);
@@ -114,7 +100,6 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
         displayAlarming();
         playSong(songName);
-        ledParty(leds, NUM_LEDS, color1, color2, bpm);
         resetButtons();
         nextState = sALARMING;
       } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
@@ -145,14 +130,12 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (stopPresses > 0) {
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         stopSound(); // TODO: write stop sound
-        stopLEDs(); // TODO: write stop leds
         savedMillis = mils;
         minuteCounter = 0;
         nextState = sIDLE;
       } else if (stopPresses == 0 && snoozePresses > 0) {
         displaySnoozing(maxSnoozeTime);
         stopSound();
-        stopLEDs();
         savedMillis = mils;
         nextState = sSNOOZING;
       } else {
@@ -163,7 +146,6 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       if (mils - savedMillis >= maxSnoozeTime) {
         displayAlarming();
         playSong(songName);
-        ledParty(leds, NUM_LEDS, color1, color2, bpm); 
         resetButtons();
         nextState = sALARMING;
       } else if (mils - savedMillis > 60000 && mils - savedMillis < maxSnoozeTime) {
