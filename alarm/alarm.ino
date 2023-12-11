@@ -29,8 +29,8 @@ CRGB color1 = CRGB::Green;
 CRGB color2 = CRGB::Black;
 
 // pins
-pin_size_t snoozeButton = 6; // TODO: modify these on official circuit
-pin_size_t offButton = 7;
+pin_size_t snoozeButton = A1; // TODO: modify these on official circuit
+pin_size_t offButton = A2;
 const int ledPin = 0; // TODO: add pins for LCD screen & other components
 
 void setup() {
