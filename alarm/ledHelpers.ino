@@ -4,7 +4,6 @@
  * sets up the LEDs 
  */
 void setupLEDs(int brightness) {
-    FastLED.setBrightness(  BRIGHTNESS );
     Serial.println("successfully initialized LEDs");
 }
 

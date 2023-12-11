@@ -51,19 +51,3 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses);
  */
 void snoozeISR(); // Note: modified to remove maxSnoozeTime
 void alarmOffISR();
-
-/*
- * LEDS
- */
-#include <stdio.h>
-#include <stdint.h>
-#include <FastLED.h>
-
-/*
- * Helper functions from ledHelpers.ino 
- */
-void setupLEDs(int brightness);
-uint32_t mils2micros(uint32_t milliseconds);
-// void lightLEDs(CRGB* leds, int num_leds, CRGB color);
-void ledParty(CRGB* leds, int num_leds, CRGB color, int bpm);
-void lightLEDs(CRGB* leds, int num_leds, CRGB color);

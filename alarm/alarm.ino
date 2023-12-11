@@ -59,9 +59,16 @@ void setup() {
   nextAlarmTime = getResp.alarm;
   newSongName = getResp.song_name;
   lastReqSecondsSince1970 = getResp.curr_time;
+  Serial.print("in setup, new song name is: ");
+  Serial.print(newSongName);
+  Serial.print(" and songName is ");
+  Serial.println(songName);
 }
 
 void loop() {
+  Serial.print("running loop, seconds is ");
+  int seconds = millis() / 1000;
+  Serial.println(seconds);
   static state CURRENT_STATE = sPROCESS_UPDATES;
   Serial.println("STATE");
   Serial.println(CURRENT_STATE);

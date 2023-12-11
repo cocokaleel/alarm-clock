@@ -23,16 +23,8 @@ void playSong(String songName) {
   AudioZero.play(myFile);
 }
 
-int requestBPM() {
-  //TODO
-}
-
 void stopSound() {
   Serial.println("running stopSound()");
-}
-
-void stopLEDs() {
-  Serial.println("running stopLEDs()");
 }
 
 /*
