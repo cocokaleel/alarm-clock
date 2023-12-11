@@ -135,7 +135,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       } else if (mils - savedMillis > 60000 && mils - savedMillis < maxSnoozeTime) {
         displaySnoozing(maxSnoozeTime - (mils - savedMillis));
         nextState = sSNOOZING;
-      } else {
+      } else { // if it's less than 1 min or less than maxSnoozeTime, continue snoozing
         nextState = sSNOOZING;
       }
       break;
