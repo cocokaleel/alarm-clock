@@ -115,7 +115,7 @@ void displayTime(int currTimeInSeconds) {
   boolean isMorning = currTimeTodayInHours > 12;
   currTimeTodayInHours -= (isMorning ? 0 : 12);
   
-  lcd.print(""+curTimeTodayInHours+":"+minuteHand+" "+(isMorning ? "AM" : "PM"));
+  lcd.print(""+currTimeTodayInHours+":"+minuteHand+" "+(isMorning ? "AM" : "PM"));
 }
 
 void displaySnoozing(int snoozeTimeMS) {
@@ -148,7 +148,7 @@ void make_request() {
     Serial.println(maxSnoozeTime);
     Serial.println(newSongName);
     Serial.println(nextAlarmTime);
-    Serial.println(curr_time);
+    Serial.println(lastReqSecondsSince1970);
   } else {
     Serial.println("Request failed, trying again in 10 sec");
   }
@@ -192,7 +192,7 @@ bool request_update() {
       res.alarm = json.substring(json.indexOf(':') + 1, first_break).toInt();
       res.snooze_in_ms = json.substring(json.indexOf(':', first_break + 1) + 1, second_break).toInt() * 60000;
       res.song_name = json.substring(json.indexOf(':', second_break + 1) + 2, third_break - 1);
-      res.curr_time = json.substring(json.indexOf(':', third + 1) + 1, json.length() - 1).toInt();
+      res.curr_time = json.substring(json.indexOf(':', third_break + 1) + 1, json.length() - 1).toInt();
       getResp = res;
       http.stop();
       return true;
