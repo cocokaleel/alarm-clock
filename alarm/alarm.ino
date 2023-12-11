@@ -12,6 +12,7 @@ static int savedMillis, minuteCounter, lastReqMillis, lastReqSecondsSince1970, m
 static bool downloadComplete;
 String songName;
 String newSongName;
+String weatherMessage;
 response getResp;
 int bpm;
 
@@ -67,12 +68,11 @@ void setup() {
   while(!requestUpdate()) {
     delay(500);
   };
+  saveWeather();
   maxSnoozeTime = getResp.snooze_in_ms;
   nextAlarmTime = getResp.alarm;
   newSongName = getResp.song_name;
   lastReqSecondsSince1970 = getResp.curr_time;
-  Serial.println("made it");
-  Serial.println(maxSnoozeTime);
 }
 
 void loop() {
@@ -120,6 +120,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
         displayConnecting();
         while(!requestUpdate());
+        saveWeather();
         maxSnoozeTime = getResp.snooze_in_ms;
         nextAlarmTime = getResp.alarm;
         newSongName = getResp.song_name;
@@ -128,6 +129,12 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
       } else if (minuteCounter < 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 < nextAlarmTime) {
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         minuteCounter += 1;
+        savedMillis = mils;
+        nextState = sIDLE;
+      } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 >= nextAlarmTime) {
+        // edge case: has been in idle state for 5 min, but alarm is within 10 min
+        // shouldn't request updates but needs to keep telling time
+        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         savedMillis = mils;
         nextState = sIDLE;
       } else {

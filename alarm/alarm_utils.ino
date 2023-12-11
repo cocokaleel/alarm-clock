@@ -16,14 +16,15 @@ void playSong(String songName) {
   if (!myFile) {
     // if the file didn't open, print an error and stop
     Serial.println("error opening HOTTOG~1.wav");
-    while (true);
+    while (true)
+      ;
   }
-  AudioZero.begin(2*44100);
+  AudioZero.begin(2 * 44100);
   AudioZero.play(myFile);
 }
 
 int requestBPM() {
-//TODO
+  //TODO
 }
 
 void stopSound() {
@@ -48,8 +49,7 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
  * Initialize system: set up LCD
  */
 void initializeSystem() {
-  lcd.begin(16,2);
-
+  lcd.begin(16, 2);
 }
 
 /*
@@ -65,8 +65,10 @@ void resetButtons() {
  */
 void displayAlarming() {
   lcd.clear();
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   lcd.print("WAKE UP");
+  lcd.setCursor(0, 1);
+  lcd.print(weatherMessage);
 }
 
 /*
@@ -74,7 +76,7 @@ void displayAlarming() {
  */
 void displayDownloadMessage() {
   lcd.clear();
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   lcd.print("DOWNLOADING SONG");
 }
 
@@ -83,30 +85,30 @@ void displayDownloadMessage() {
  */
 void displayConnecting() {
   lcd.clear();
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   lcd.print("CONNECTING...");
 }
 
 void displayTime(int currTimeInSeconds) {
   lcd.clear();
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   int secsInADay = 86400;
-  int currTimeTodayInSecs = currTimeInSeconds % secsInADay; // time since 1900 % seconds in a day
+  int currTimeTodayInSecs = currTimeInSeconds % secsInADay;  // time since 1900 % seconds in a day
   int currTimeTodayInMinutes = currTimeTodayInSecs / 60;
   int minuteHand = currTimeTodayInMinutes % 60;
   int currTimeTodayInHours = currTimeTodayInMinutes / 60;
   boolean isAfternoon = currTimeTodayInHours > 12;
   currTimeTodayInHours -= (isAfternoon ? 12 : 0);
-  String time_string = String(currTimeTodayInHours)+":"+minuteHand+" "+(isAfternoon ? "PM" : "AM");
+  String time_string = String(currTimeTodayInHours) + ":" + minuteHand + " " + (isAfternoon ? "PM" : "AM");
   lcd.print(time_string);
   Serial.println("displaying time!");
 }
 
 void displaySnoozing(int snoozeTimeMS) {
   lcd.clear();
-  lcd.setCursor(0,0);
+  lcd.setCursor(0, 0);
   lcd.print("SNOOZED: ");
-  lcd.print(snoozeTimeMS / 60000); // TODO: think about if this will result in incorrect rounding
+  lcd.print(snoozeTimeMS / 60000);  // TODO: think about if this will result in incorrect rounding
   lcd.print(" min");
 }
 
@@ -138,20 +140,17 @@ bool requestUpdate() {
       Serial.println(bodyLen);
       Serial.println();
       Serial.println("Body:");
-    
+
       unsigned long timeoutStart = millis();
       char c;
-      while ( (http.connected() || http.available()) &&
-             (!http.endOfBodyReached()) &&
-             ((millis() - timeoutStart) < 30000) ) {
-          if (http.available()) {
-              c = http.read();
-              json += c;
-              timeoutStart = millis();
-          }
-          else {
-              delay(500);
-          }
+      while ((http.connected() || http.available()) && (!http.endOfBodyReached()) && ((millis() - timeoutStart) < 30000)) {
+        if (http.available()) {
+          c = http.read();
+          json += c;
+          timeoutStart = millis();
+        } else {
+          delay(500);
+        }
       }
       Serial.println(json);
       getResp = parseJSON(json);
@@ -165,13 +164,11 @@ bool requestUpdate() {
       Serial.println(nextAlarmTime);
       Serial.println(lastReqSecondsSince1970);
       return true;
-    }
-    else {    
+    } else {
       Serial.print("Getting response failed: ");
       Serial.println(err);
     }
-  }
-  else {
+  } else {
     Serial.print("Connect failed: ");
     Serial.println(err);
   }
@@ -192,7 +189,7 @@ response parseJSON(String json) {
 }
 
 String pullWeather() {
-  String json = "";
+  String weather_report = "";
   int err = 0;
   err = http.get("/weather");
   if (err == 0) {
@@ -202,28 +199,22 @@ String pullWeather() {
       Serial.println(err);
       unsigned long timeoutStart = millis();
       char c;
-      while ( (http.connected() || http.available()) &&
-             (!http.endOfBodyReached()) &&
-             ((millis() - timeoutStart) < 30000)) {
-          if (http.available()) {
-              c = http.read();
-              json += c;
-              timeoutStart = millis();
-          }
-          else {
-              delay(500);
-          }
+      while ((http.connected() || http.available()) && (!http.endOfBodyReached()) && ((millis() - timeoutStart) < 30000)) {
+        if (http.available()) {
+          c = http.read();
+          weather_report += c;
+          timeoutStart = millis();
+        } else {
+          delay(500);
+        }
       }
-      Serial.println(json);
       http.stop();
-      return json;
-    }
-    else {    
+      return weather_report;
+    } else {
       Serial.print("Getting response failed: ");
       Serial.println(err);
     }
-  }
-  else {
+  } else {
     Serial.print("Connect failed: ");
     Serial.println(err);
   }
@@ -231,7 +222,53 @@ String pullWeather() {
   return "";
 }
 
-void downloadSong(newSongName) {
+String weatherDecoder(String code) {
+  if (code == "00" || code == "01") {
+    return "CLEAR";
+  } else if (code == "03") {
+    return "CLOUDY";
+  } else if (code.charAt(0) == '0') {
+    return "HAZE";
+  } else if (code.charAt(0) == '3') {
+    return "DUSTY";
+  } else if (code.charAt(0) == '4') {
+    return "FOG";
+  } else if (code.charAt(0) == '5') {
+    return "DRIZZLE";
+  } else if (code.charAt(0) == '6') {
+    return "RAIN";
+  } else if (code.charAt(0) == '7') {
+    return "SNOW";
+  } else if (code.charAt(0) == '8') {
+    return "SHOWERS";
+  } else if (code == "95" || code == "96" || code == "97" || code == "98" || code == "99") {
+    return "STORMS";
+  } else {
+    return "";
+  }
+}
+
+void saveWeather() {
+  String rawJSON = pullWeather();
+  // if failed, try one more time
+  rawJSON = (rawJSON.length() == 0 ? pullWeather() : rawJSON);
+  String weatherJSON = rawJSON.substring(rawJSON.indexOf("\"code\":"));
+  if (weatherJSON.length() == 0) {
+    weatherMessage = "";
+  } else {
+    int first_break = weatherJSON.indexOf(',');
+    int second_break = weatherJSON.indexOf(',', first_break + 1);
+    String code = weatherJSON.substring(weatherJSON.indexOf(':') + 1, first_break);
+    String high = weatherJSON.substring(weatherJSON.indexOf(':', first_break + 1) + 1, second_break);
+    String low = weatherJSON.substring(weatherJSON.indexOf(':', second_break + 1) + 1, weatherJSON.length() - 1);
+    String translated_code = weatherDecoder(code);
+    weatherMessage = "H:" + high + " L:" + low + " " + translated_code;
+    Serial.println("weather");
+    Serial.println(weatherMessage);
+  }
+}
+
+void downloadSong(String newSongName) {
   int err = 0;
   err = http.get("/download-wav");
   if (err == 0) {
@@ -241,25 +278,20 @@ void downloadSong(newSongName) {
       Serial.println(err);
       unsigned long timeoutStart = millis();
       char c;
-      while ( (http.connected() || http.available()) &&
-             (!http.endOfBodyReached()) &&
-             ((millis() - timeoutStart) < 30000) ) {
-          if (http.available()) {
-              c = http.read();
-              
-              timeoutStart = millis();
-          }
-          else {
-              delay(500);
-          }
+      while ((http.connected() || http.available()) && (!http.endOfBodyReached()) && ((millis() - timeoutStart) < 30000)) {
+        if (http.available()) {
+          c = http.read();
+
+          timeoutStart = millis();
+        } else {
+          delay(500);
+        }
       }
-    }
-    else {    
+    } else {
       Serial.print("Getting response failed: ");
       Serial.println(err);
     }
-  }
-  else {
+  } else {
     Serial.print("Connect failed: ");
     Serial.println(err);
   }

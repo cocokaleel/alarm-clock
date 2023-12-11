@@ -42,6 +42,7 @@ void displayDownloadMessage();
 void displayConnecting();
 void displayTime(int currTimeInSeconds);
 void displaySnoozing(int snoozeTimeMS);
+void downloadSong(String newSongName);
 
 state updateFSM(state curState, long mils, int snoozePresses, int stopPresses);
 
