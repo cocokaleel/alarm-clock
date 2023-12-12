@@ -64,6 +64,3 @@ void alarmOffISR();
  */
 void setupLEDs(int brightness);
 uint32_t mils2micros(uint32_t milliseconds);
-// void lightLEDs(CRGB* leds, int num_leds, CRGB color);
-void ledParty(CRGB* leds, int num_leds, CRGB color, int bpm);
-void lightLEDs(CRGB* leds, int num_leds, CRGB color);
