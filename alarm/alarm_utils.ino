@@ -25,8 +25,8 @@ void playSong(String songName) {
     while (true)
       ;
   }
-  playingSong = true;
   AudioZero.begin(2 * 44100);
+  playingSong = true;
   AudioZero.play(myFile);
 }
 

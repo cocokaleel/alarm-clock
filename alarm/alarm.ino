@@ -43,8 +43,8 @@ void setup() {
   pinMode(offButton, INPUT);
 
   /* initialize interrupts */
-  // attachInterrupt(snoozeButton, snoozeISR, FALLING);
-  // attachInterrupt(offButton, alarmOffISR, FALLING);
+  attachInterrupt(snoozeButton, snoozeISR, FALLING);
+  attachInterrupt(offButton, alarmOffISR, FALLING);
 
 
   setupWiFi();
