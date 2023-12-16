@@ -78,16 +78,16 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
   switch (curState) {
     case sPROCESS_UPDATES:
       if (newSongName != songName) {
+        displayDownloadMessage();
         songName = newSongName;
-        displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
-        savedMillis = mils;
-        minuteCounter = 0;
-        nextState = sIDLE;
-        // if we were able to download .wavs to the SD card:
-        //displayDownloadMessage();
-        //downloadComplete = false;
-        //downloadSong(newSongName);
-        //nextState = sDOWNLOAD_SONG;
+        downloadComplete = false;
+        downloadSong(newSongName);
+        nextState = sDOWNLOAD_SONG;
+        // FOLLOWING CODE WAS USED FOR DEMO, WHEN ALL SONGS WERE PRE-DOWNLOADED
+        // displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
+        // savedMillis = mils;
+        // minuteCounter = 0;
+        // nextState = sIDLE;
       } else {
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         savedMillis = mils;
