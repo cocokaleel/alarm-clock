@@ -1,38 +1,33 @@
 void snoozeISR() {
   Serial.println("snooze ISR entered!");
   snoozeButtonPresses++;
-  AudioZero.end();
+  if (playingSong) {
+    AudioZero.end();
+    playingSong = false;
+  }
 }
 
 void alarmOffISR() {
   Serial.println("alarm off ISR entered!");
   stopButtonPresses++;
-  AudioZero.end();
+  if (playingSong) {
+    AudioZero.end();
+    playingSong = false;
+  }
 }
 
 void playSong(String songName) {
   Serial.println("running playSong()");
-  File myFile = SD.open("HOTTOG~1.wav");
+  File myFile = SD.open(songName);
   if (!myFile) {
     // if the file didn't open, print an error and stop
-    Serial.println("error opening HOTTOG~1.wav");
+    Serial.println("error opening " + songName);
     while (true)
       ;
   }
   AudioZero.begin(2 * 44100);
+  playingSong = true;
   AudioZero.play(myFile);
-}
-
-int requestBPM() {
-  //TODO
-}
-
-void stopSound() {
-  Serial.println("running stopSound()");
-}
-
-void stopLEDs() {
-  Serial.println("running stopLEDs()");
 }
 
 /*
@@ -101,14 +96,13 @@ void displayTime(int currTimeInSeconds) {
   currTimeTodayInHours -= (isAfternoon ? 12 : 0);
   String time_string = String(currTimeTodayInHours) + ":" + minuteHand + " " + (isAfternoon ? "PM" : "AM");
   lcd.print(time_string);
-  Serial.println("displaying time!");
 }
 
 void displaySnoozing(int snoozeTimeMS) {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("SNOOZED: ");
-  lcd.print(snoozeTimeMS / 60000);  // TODO: think about if this will result in incorrect rounding
+  lcd.print(int((snoozeTimeMS + 30000) / 60000));
   lcd.print(" min");
 }
 
@@ -223,7 +217,7 @@ String pullWeather() {
 }
 
 String weatherDecoder(String code) {
-  if (code == "00" || code == "01") {
+  if (code == "0" || code == "00" || code == "01") {
     return "CLEAR";
   } else if (code == "03") {
     return "CLOUDY";
