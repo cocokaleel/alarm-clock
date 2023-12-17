@@ -1,3 +1,6 @@
+/*
+ * Increments snoozeButtonPresses and stops song if currently playing
+ */
 void snoozeISR() {
   Serial.println("snooze ISR entered!");
   snoozeButtonPresses++;
@@ -7,6 +10,9 @@ void snoozeISR() {
   }
 }
 
+/*
+ * Increments stopButtonPresses and stops song if currently playing
+ */
 void alarmOffISR() {
   Serial.println("alarm off ISR entered!");
   stopButtonPresses++;
@@ -16,6 +22,9 @@ void alarmOffISR() {
   }
 }
 
+/*
+ * Plays selected song based on songName input
+ */
 void playSong(String songName) {
   Serial.println("running playSong()");
   File myFile = SD.open(songName);
@@ -31,11 +40,7 @@ void playSong(String songName) {
 }
 
 /*
- * FUNCTIONS THAT ARE FILLED IN BELOW THIS POINT
- /
-
-/*
- * Initialize LCD based on Lab 5 schematic
+ * Initialize LCD
  */
 const int rs = 0, en = 1, d4 = 2, d5 = 3, d6 = 4, d7 = 5;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -84,6 +89,9 @@ void displayConnecting() {
   lcd.print("CONNECTING...");
 }
 
+/*
+ * Given current time in seconds since 1970, display current time
+ */
 void displayTime(int currTimeInSeconds) {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -98,6 +106,9 @@ void displayTime(int currTimeInSeconds) {
   lcd.print(time_string);
 }
 
+/*
+ * Display snooze message with remaining snooze time
+ */
 void displaySnoozing(int snoozeTimeMS) {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -106,6 +117,9 @@ void displaySnoozing(int snoozeTimeMS) {
   lcd.print(" min");
 }
 
+/*
+ * Connects to Brown-Guest wifi
+ */
 void setupWiFi() {
   char ssid[] = "Brown-Guest";
   char pass[] = "";
@@ -119,6 +133,11 @@ void setupWiFi() {
   Serial.println("Connected!");
 }
 
+/*
+ * Makes a get request to alarm-interface-d79607b746d4.herokuapp.com for current 
+ * alarm settings
+ * Returns true if request was successful, and false otherwise
+ */
 bool requestUpdate() {
   String json = "";
   int err = 0;
@@ -170,6 +189,10 @@ bool requestUpdate() {
   return false;
 }
 
+/*
+ * Parses json-like string to extract individual settings, returns current
+ * song name, time, alarm time, and snooze duration as a response object
+ */
 response parseJSON(String json) {
   int first_break = json.indexOf(',');
   int second_break = json.indexOf(',', first_break + 1);
@@ -182,6 +205,10 @@ response parseJSON(String json) {
   return res;
 }
 
+/*
+ * Makes a get request to /weather endpoint of alarm-interface-d79607b746d4.herokuapp.com
+ * Returns response as a String, or "" if the request was not successful
+ */
 String pullWeather() {
   String weather_report = "";
   int err = 0;
@@ -216,6 +243,9 @@ String pullWeather() {
   return "";
 }
 
+/*
+ * Decodes a weather code based on WMO weather codes, returns corresponding String
+ */
 String weatherDecoder(String code) {
   if (code == "0" || code == "00" || code == "01") {
     return "CLEAR";
@@ -242,6 +272,9 @@ String weatherDecoder(String code) {
   }
 }
 
+/*
+ * Parses and saves weather from get request. Weather is saved in weatherMessage variable. 
+ */
 void saveWeather() {
   String rawJSON = pullWeather();
   // if failed, try one more time
@@ -262,6 +295,9 @@ void saveWeather() {
   }
 }
 
+/*
+ * Receives wav file via get request and downloads song to SD card
+ */
 void downloadSong(String newSongName) {
   String testing = "";
   int err = 0;

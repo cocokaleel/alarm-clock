@@ -77,7 +77,7 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
   state nextState;
   switch (curState) {
     case sPROCESS_UPDATES:
-      if (newSongName != songName) {
+      if (newSongName != songName) { // 1-2
         displayDownloadMessage();
         songName = newSongName;
         downloadComplete = false;
@@ -88,32 +88,32 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
         // savedMillis = mils;
         // minuteCounter = 0;
         // nextState = sIDLE;
-      } else {
+      } else { // 1-3
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         savedMillis = mils;
         minuteCounter = 0;
         nextState = sIDLE;
       }
       break;
-    case sDOWNLOAD_SONG:
-      if (downloadComplete) {
+    case sDOWNLOAD_SONG: // 2-3
+      if (downloadComplete) { 
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         songName = newSongName;
         savedMillis = mils;
         minuteCounter = 0;
         nextState = sIDLE;
-      } else {
+      } else { // 2-2
         displayDownloadMessage();
         nextState = sDOWNLOAD_SONG;
       }
       break;
     case sIDLE:
-      if (lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) {
+      if (lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 >= nextAlarmTime) { // 3-4
         displayAlarming();
         playSong(songName);
         resetButtons();
         nextState = sALARMING;
-      } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) {
+      } else if (minuteCounter >= 5 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 < nextAlarmTime) { // 3-1
         displayConnecting();
         while(!requestUpdate());
         saveWeather();
@@ -122,47 +122,47 @@ state updateFSM(state curState, long mils, int snoozePresses, int stopPresses) {
         newSongName = getResp.song_name;
         lastReqSecondsSince1970 = getResp.curr_time;
         nextState = sPROCESS_UPDATES;
-      } else if (minuteCounter < 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 < nextAlarmTime) {
+      } else if (minuteCounter < 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 < nextAlarmTime) { // 3-3
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         minuteCounter += 1;
         savedMillis = mils;
         nextState = sIDLE;
-      } else if (minuteCounter >= 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 >= nextAlarmTime) {
+      } else if (minuteCounter >= 5 && mils - savedMillis >= 60000 && lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000 + 600 >= nextAlarmTime) { // 3-3
         // edge case: has been in idle state for 5 min, but alarm is within 10 min
         // shouldn't request updates but needs to keep telling time
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         savedMillis = mils;
         nextState = sIDLE;
-      } else {
+      } else { // 3-3
         nextState = sIDLE;
       }
       break;
     case sALARMING:
-      if (stopPresses > 0) {
+      if (stopPresses > 0) { // 4-3
         displayTime(lastReqSecondsSince1970 + (mils - lastReqMillis) / 1000);
         savedMillis = mils;
         minuteCounter = 0;
         nextState = sIDLE;
-      } else if (stopPresses == 0 && snoozePresses > 0) {
+      } else if (stopPresses == 0 && snoozePresses > 0) { // 4-5
         displaySnoozing(maxSnoozeTime);
         savedMillis = mils;
         savedSnoozeMillis = mils;
         nextState = sSNOOZING;
-      } else {
+      } else { // 4-4
         nextState = sALARMING;
       }
       break;
     case sSNOOZING:
-      if (mils - savedMillis >= maxSnoozeTime) {
+      if (mils - savedMillis >= maxSnoozeTime) { // 5-4
         displayAlarming();
         resetButtons();
         playSong(songName);
         nextState = sALARMING;
-      } else if (mils - savedSnoozeMillis > 60000 && mils - savedMillis < maxSnoozeTime) {
+      } else if (mils - savedSnoozeMillis > 60000 && mils - savedMillis < maxSnoozeTime) { // 5-5
         displaySnoozing(maxSnoozeTime - (mils - savedMillis));
         savedSnoozeMillis = mils; 
         nextState = sSNOOZING;
-      } else {
+      } else { // 5-5
         nextState = sSNOOZING;
       }
       break;
