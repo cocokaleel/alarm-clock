@@ -4,6 +4,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <AudioZero.h>
+#include "Sodaq_wdt.h" 
 
 const int chipSelect = 7;
 
@@ -65,11 +66,21 @@ void setup() {
   nextAlarmTime = getResp.alarm;
   newSongName = getResp.song_name;
   lastReqSecondsSince1970 = getResp.curr_time;
+
+  /* initialize watchdog timer */ 
+  sodaq_wdt_enable(WDT_PERIOD_8X); // 8 seconds
 }
 
 void loop() {
   static state CURRENT_STATE = sPROCESS_UPDATES;
   CURRENT_STATE = updateFSM(CURRENT_STATE, millis(), snoozeButtonPresses, stopButtonPresses);
+  //pets and resets the watchdog
+  sodaq_wdt_reset();
+  if (sodaq_wdt_flag) { // when WDT tripped, print message and restart
+    sodaq_wdt_flag = false;
+    sodaq_wdt_reset();
+    Serial.println("WDT interrupt has been triggered");
+  }
   delay(10);
 }
 
